@@ -1,0 +1,65 @@
+---
+title: Presence
+description: How to use Presence
+---
+
+:::caution[WIP]
+Presence is currently a work-in-progress. It will be made simpler to use, more robust, and provide more features in the future.
+
+The API for Presence is currently unstable and will be changing.
+:::
+
+Bamboo provides a Presence module for maintaining global state and individual entity state. Let's take a look at a basic example of using Presence. With this example we won't worry about individual state, but we will manage the global state of our application.
+
+In this example, we'll manage a count of how many active users there are. Assuming that we're handling realtime functionality elsewhere, we'll just focus on using presence here.
+
+```ts
+type GlobalState = { count: { users: number } };
+
+const initialState: GlobalState = { count: { users: 0 } };
+const presence = new Presence<GlobalState, any>("chat", initialState, {
+  open(state, _) {
+    presence.setState({ ...state, count: { users: state.count.users + 1 } });
+  },
+  close(state, _) {
+    if (state.count.users > 0) {
+      presence.setState({ ...state, count: { users: state.count.users - 1 } });
+    }
+  },
+  onUpdate(prev, current) {
+    // do something with the current state and previous state
+  },
+});
+
+// From websockets or wherever entities are coming from:
+//...
+join(id) {
+  presence.open({key: id, state: { online: true }})
+},
+leave(id) {
+  presence.close({ key: id, state: { online: false } })
+}
+// ...
+```
+
+This can be used in-conjunction with [Telegram](/features/telegram) to sync state between multiple machines:
+
+```ts
+// ...
+  onUpdate(prev, current) {
+    client.publish({
+      topic: 'chat',
+      state: {
+        prev, current
+      }
+    })
+  }
+// ...
+// which can then be handled by the Telegram client listener
+// ...
+  handle(payload) {
+    if (payload.topic === 'chat') {
+      presence.setState(payload.state.current)
+    }
+  }
+```

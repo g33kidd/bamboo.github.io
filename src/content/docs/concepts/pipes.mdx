@@ -1,0 +1,33 @@
+---
+title: Pipes
+description: Pipes
+---
+
+Pipes are what is used to provide functionality to Endpoints and control the flow of a request. However, you're not just limited to one. A single [action](/concepts/actions) can have several pipes connected to it, and a pipe can also have several pipes connected to it.
+
+:::caution[Page Unfinished]
+Currently, this page is a work in progress. More examples will be added.
+:::caution
+
+## Example
+
+Here is an example of a setup of pipes that handles Bearer Token Authorization:
+
+```ts
+// For this example we'll assume that our header is 'Authorization: 1234xxxx'
+export default new Pipe(
+  "authentication",
+  async (endpoint: Endpoint) => {
+    const bearerToken = endpoint.header("authorization");
+
+    if (bearerToken) {
+      endpoint.stash("bearer-token", bearerToken);
+    } else {
+      endpoint.stash("bearer-token", 0);
+    }
+
+    return endpoint;
+  },
+  []
+);
+```

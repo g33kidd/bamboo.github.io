@@ -1,0 +1,81 @@
+---
+title: Telegram
+description: How to send messages to other services using Telegram
+---
+
+Not to be confused with the messaging app Telegram! Bamboo's Telegram is for sending messages between different machines, services, or whatever you may find it useful for.
+
+Originally this was created to work smoothly with a site hosted on [Fly.io](https://fly.io). As fly allows you to run your application on several machines, some applications may need to transfer or sync state between each other. Telegram was created for this purpose!
+
+:::caution[One-way Messages]
+Currently, Telegram only supports sending one-way messages. This will be changed in the future to allow sending messages back and forth.
+:::
+
+## Server
+
+`TelegramServer` is responsible for receiving messages from clients connected to it, and broadcasting those messages to all other clients.
+
+In order to use Telegram, you first need to create a server. A Telegram Server can be created simply by creating a new instance of a `TelegramServer`:
+
+```ts
+// index.ts
+import { TelegramServer } from "bamboo";
+new TelegramServer({ hostname: "localhost", port: 4567 });
+```
+
+##### High-Availability
+
+If needed, you can in theory, use a TelegramServer to manage several other instance of TelegramServers. This would require the use of a TelegramClient to send message. An example of this is below:
+
+```ts
+// TODO: Write an example that uses a single TelegramServer to send messages to several TelegramServers.
+```
+
+## Client
+
+A client is responsible for broadcasting messages and receiving messages. Here is a basic example of a client:
+
+```ts
+import { TelegramClient } from "bamboo";
+
+const client = new TelegramClient({
+  hostname: "localhost",
+  port: 4567,
+  handler(payload) {
+    console.log(payload);
+  },
+});
+
+client.broadcast({
+  topic: "rooms:1",
+  message: "A message from Alice!",
+  datetime: Date.now(),
+});
+```
+
+If you're looking for a more complex example of Telegram in-action, here's an example that shows several clients communicating with eachother:
+
+```ts
+const clients = [];
+
+for (let i = 0; i < 120; i++) {
+  const client = new TelegramClient({
+    hostname: "0.0.0.0",
+    port: 4567,
+    handler(payload) {
+      console.log(payload);
+    },
+  });
+
+  setInterval(() => {
+    const bytes = randomBytes(32).toString("base64");
+    client.broadcast({
+      topic: "room:1",
+      message: bytes,
+      datetime: new Date(Date.now()).toTimeString(),
+    });
+  }, 10 * i);
+
+  clients.push(client);
+}
+```
