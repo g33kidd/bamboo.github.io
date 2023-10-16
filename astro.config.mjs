@@ -3,6 +3,7 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
+	outDir: 'docs',
 	site: 'https://bamboo.github.io',
 	integrations: [
 		starlight({
